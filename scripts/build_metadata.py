@@ -13,7 +13,8 @@ from neuroface.metadata import build_metadata
 
 if __name__ == '__main__':
     DATA_ROOT = Path(__file__).resolve().parent.parent / "Data"
-    OUTPUT_CSV = Path("metadata/metadata_frames.csv")
+    # OUTPUT_CSV = Path("metadata/metadata_frames.csv")
+    OUTPUT_CSV = Path(__file__).resolve().parent.parent / "metadata" / "metadata_frames.csv"
 
     config = default_config(DATA_ROOT)
     df = build_metadata(config, save_csv=OUTPUT_CSV)
