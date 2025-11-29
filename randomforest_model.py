@@ -1,6 +1,11 @@
 # Create RandomForest model for comparison with the RestNet models
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    classification_report,
+    confusion_matrix,
+)
 from sklearn.model_selection import train_test_split
 import numpy as np
 
@@ -9,9 +14,9 @@ rf = RandomForestClassifier(
     n_estimators=300,
     max_depth=None,
     n_jobs=-1,
-    class_weight='balanced',
-    random_state=42
-  )
+    class_weight="balanced",
+    random_state=42,
+)
 
 print("\nCollecting training data for RandomForest...")
 
@@ -22,7 +27,7 @@ all_train_labels = []
 
 for images, labels in tqdm(train_loader):
     # Flatten images and convert to numpy
-    all_train_images.append(images.view(-1, 28*28).numpy())
+    all_train_images.append(images.view(-1, 28 * 28).numpy())
     # Convert labels to numpy
     all_train_labels.append(labels.numpy())
 
@@ -36,7 +41,7 @@ rf.fit(x_train_rf, y_train_rf)
 
 print("\nEvaluating RandomForest...")
 # Prepare test data for evaluation
-x_test_rf = mnist_test.data.view(-1, 28*28).numpy()
+x_test_rf = mnist_test.data.view(-1, 28 * 28).numpy()
 y_test_rf = mnist_test.targets.numpy()
 
 # Make predictions on the test set
@@ -49,7 +54,7 @@ print(classification_report(y_test_rf, y_pred))
 print("\nAccuracy: {}".format(accuracy_score(y_test_rf, y_pred)))
 
 # Print f1 score
-print("\nF1 Score: {}".format(f1_score(y_test_rf, y_pred, average='weighted')))
+print("\nF1 Score: {}".format(f1_score(y_test_rf, y_pred, average="weighted")))
 
 # Print Confusion Matrix
 print("\nConfusion Matrix:")
