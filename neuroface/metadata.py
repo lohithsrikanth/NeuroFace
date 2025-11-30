@@ -103,7 +103,7 @@ def build_metadata(
                 )
 
             rel_frame_path = img_path.relative_to(base_path)
-            rel_lm_path = img_path.relative_to(base_path)
+            rel_lm_path = lm_file.relative_to(base_path)
             rel_bbox_path = bbox_file.relative_to(base_path)
 
             records.append(
