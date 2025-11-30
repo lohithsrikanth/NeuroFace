@@ -215,3 +215,46 @@ class LandmarkFeatureExtractor:
         
         df_features = pd.concat(feature_dfs, axis=0).reset_index(drop=True)
         return df_features
+    
+def build_subject_task_feature_table(
+    frame_features_df: pd.DataFrame,
+    agg: str = "mean",
+) -> pd.DataFrame:
+    """
+    Aggregate frame-level features to subject+task-level features.
+
+    New behavior:
+      - Aggregates frames by:
+            subject_id, group, label_idx, split, task
+      - Produces one row per (subject, task) pair.
+      - Prevents mixing landmarks from different tasks.
+    
+    Returns DataFrame:
+      columns:
+        subject_id, group, label_idx, split, task, f_000..f_(D-1)
+    """
+
+    # Feature columns (f_000, f_001, ... )
+    feature_cols = [c for c in frame_features_df.columns if c.startswith("f_")]
+
+    # REQUIRED grouping columns, now includes task
+    group_cols = ["subject_id", "group", "label_idx", "split", "task"]
+
+    if agg == "mean":
+        agg_df = (
+            frame_features_df
+            .groupby(group_cols)[feature_cols]
+            .mean()
+            .reset_index()
+        )
+    elif agg == "median":
+        agg_df = (
+            frame_features_df
+            .groupby(group_cols)[feature_cols]
+            .median()
+            .reset_index()
+        )
+    else:
+        raise ValueError(f"Unsupported aggregation: {agg}")
+
+    return agg_df
