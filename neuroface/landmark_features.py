@@ -130,7 +130,7 @@ class LandmarkFeatureExtractor:
         df.columns = [c.strip() for c in df.columns]
         return df
     
-    def exract_frame_features_for_group(
+    def extract_frame_features_for_group(
         self,
         df_group: pd.DataFrame,
     ) -> pd.DataFrame:
@@ -206,8 +206,8 @@ class LandmarkFeatureExtractor:
         grouped = metadata_df.groupby(["group", "subject_id", "video_id", "task"])
 
         for _, df_group in grouped:
-            fdf = self.exract_frame_features_for_group(df_group)
-            if not fdf.empty():
+            fdf = self.extract_frame_features_for_group(df_group)
+            if not fdf.empty:
                 feature_dfs.append(fdf)
 
         if not feature_dfs:
