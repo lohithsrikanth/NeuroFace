@@ -28,5 +28,9 @@ if __name__ == "__main__":
         METADATA_CSV.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(METADATA_CSV, index=False)
 
+    print("Converting relative paths to absolute paths for processing...")
+    df["frame_path"] = df["frame_path"].apply(lambda p: str(project_root / p))
+    df["bbox_path"] = df["bbox_path"].apply(lambda p: str(project_root / p))
+
     offline_preprocess_all_frames(df, config, OUTPUT_ROOT, overwrite=False)
     print("Offline preprocessing complete")

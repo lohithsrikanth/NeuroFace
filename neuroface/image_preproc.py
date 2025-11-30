@@ -71,9 +71,9 @@ def offline_preprocess_all_frames(
             if out_path.exists() and not overwrite:
                 continue
 
-        img = Image.open(frame_path).convert("RGB")
-        bbox = get_bbox_for_frame(df_bbox, frame_idx)
-        face_img = crop_face_from_frame(img, bbox)
-        face_img = face_img.resize((config.image_size, config.image_size), Image.BICUBIC)
-        face_img.save(out_path, quality=95)
+            img = Image.open(frame_path).convert("RGB")
+            bbox = get_bbox_for_frame(df_bbox, frame_idx)
+            face_img = crop_face_from_frame(img, bbox)
+            face_img = face_img.resize((config.image_size, config.image_size), Image.BICUBIC)
+            face_img.save(out_path, quality=95)
 
