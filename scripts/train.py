@@ -9,6 +9,9 @@ from .models import get_resnet, get_densenet
 from .eval_utils import evaluate
 import os
 import torch.multiprocessing as mp
+import json
+import random
+
 
 def train_one_epoch(model,data_loader, criterion, optimizer, device):
     model.train()
@@ -49,14 +52,55 @@ def train_model(model, train_loader, val_loader, test_loader, optimizer, criteri
     Returns:
         None
     """
+    history = {
+        "train_loss": [],
+        "train_accuracy": [],
+        "train_f1": [],
+        "val_loss": [],
+        "val_accuracy": [],
+        "val_f1": []
+    }
+
     best_val_f1 = 0.0
     best_state_dict = None
 
     for epoch in trange(num_epochs):
-        train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
-        val_acc, val_f1 = evaluate(model, val_loader, device)
+        # Training phase
+        model.train()
+        running_loss = 0.0
+        correct = 0
+        total = 0
+        for images, labels in tqdm(train_loader):
+            images, labels = images.to(device), labels.to(device)
 
-        print(f"Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Val Acc: {val_acc:.4f}, Val F1: {val_f1:.4f}")
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            running_loss += loss.item() * images.size(0)
+            _, predicted = outputs.max(1)
+            correct += predicted.eq(labels).sum().item()
+            total += labels.size(0)
+
+        train_loss = running_loss / len(train_loader.dataset)
+        train_accuracy = correct / total
+        train_f1 = evaluate(model, train_loader, device, metric="f1")  # Assuming evaluate supports metric selection
+
+        # Validation phase
+        val_loss, val_accuracy, val_f1 = evaluate(model, val_loader, device, criterion=criterion)
+
+        # Save metrics to history
+        history["train_loss"].append(train_loss)
+        history["train_accuracy"].append(train_accuracy)
+        history["train_f1"].append(train_f1)
+        history["val_loss"].append(val_loss)
+        history["val_accuracy"].append(val_accuracy)
+        history["val_f1"].append(val_f1)
+
+        print(f"Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Acc: {train_accuracy:.4f}, Train F1: {train_f1:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_accuracy:.4f}, Val F1: {val_f1:.4f}")
+
         if val_f1 > best_val_f1:
             best_val_f1 = val_f1
             best_state_dict = model.state_dict().copy()
@@ -71,8 +115,34 @@ def train_model(model, train_loader, val_loader, test_loader, optimizer, criteri
     torch.save(model.state_dict(), f"models/{model_name}_neuroface_best_model.pth")
     print(f"Saved best model as models/{model_name}_neuroface_best_model.pth")
 
+    # Save training history
+    os.makedirs("histories", exist_ok=True)
+    with open(f"histories/{model_name}_history.json", "w") as f:
+        json.dump(history, f)
+    print(f"Saved training history as histories/{model_name}_history.json")
+
+def set_seed(seed: int):
+    """
+    Set the random seed for reproducibility.
+
+    Args:
+        seed (int): The seed value to set.
+
+    Returns:
+        None
+    """
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
 if __name__ == "__main__":
     mp.set_start_method("spawn", force=True)
+
+    # Set seed for reproducibility
+    set_seed(42)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Load model data
@@ -81,18 +151,14 @@ if __name__ == "__main__":
         batch_size=32,
         num_workers=2 # Consistent num_workers with dataset_utils.py
     )
-    model_names = ["densenet121"]
-    #model_names = ["resnet18", "resnet50", "densenet121", "densenet169", "densenet201"]
+    model_names = ["densenet121", "densenet169", "densenet201"]
 
     for model_name in model_names:
         print(f"Training model: {model_name}")
-        if model_name in ["resnet18", "resnet50"]:
-            model = get_resnet(model_name=model_name, pretrained=True, num_classes=len(classes))
-        else:
-            model = get_densenet(model_name=model_name, pretrained=True, num_classes=len(classes))
+        model = get_densenet(model_name=model_name, weights="IMAGENET1K_V1", num_classes=len(classes))
         model = model.to(device)
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-        train_model(model, train_loader, val_loader, test_loader, optimizer, criterion, num_epochs=0, device=device, model_name=model_name)
+        train_model(model, train_loader, val_loader, test_loader, optimizer, criterion, num_epochs=5, device=device, model_name=model_name)
