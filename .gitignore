@@ -208,4 +208,5 @@ __marimo__/
 
 Data/
 processed_frames/
+*/__MACOSX
 .DS_Store

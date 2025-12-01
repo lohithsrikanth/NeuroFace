@@ -84,9 +84,7 @@ def train_model(model, train_loader, val_loader, test_loader, optimizer, criteri
             correct += predicted.eq(labels).sum().item()
             total += labels.size(0)
 
-        train_loss = running_loss / len(train_loader.dataset)
-        train_accuracy = correct / total
-        train_f1 = evaluate(model, train_loader, device, metric="f1")  # Assuming evaluate supports metric selection
+        train_loss, train_accuracy,train_f1 = evaluate(model, train_loader, device, criterion)  # Assuming evaluate supports metric selection
 
         # Validation phase
         val_loss, val_accuracy, val_f1 = evaluate(model, val_loader, device, criterion=criterion)
@@ -108,7 +106,7 @@ def train_model(model, train_loader, val_loader, test_loader, optimizer, criteri
     # Load best model and evaluate on test set
     if best_state_dict is not None:
         model.load_state_dict(best_state_dict)
-    test_acc, test_f1 = evaluate(model, test_loader, device)
+    test_loss, test_acc, test_f1 = evaluate(model, test_loader, device)
     print(f"Test Acc: {test_acc:.4f}, Test F1: {test_f1:.4f}")
 
     os.makedirs("models", exist_ok=True)
@@ -145,12 +143,14 @@ if __name__ == "__main__":
     set_seed(42)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Device: {device}")
     # Load model data
     train_loader, val_loader, test_loader, _, classes = get_dataloaders(
         data_root="processed_frames",
         batch_size=32,
         num_workers=2 # Consistent num_workers with dataset_utils.py
     )
+    #model_names = ["resnet18"]
     model_names = ["resnet18", "resnet50", "densenet121", "densenet169", "densenet201"]
 
     for model_name in model_names:
@@ -159,9 +159,28 @@ if __name__ == "__main__":
             model = get_resnet(model_name=model_name, num_classes=len(classes))
         else:
             model = get_densenet(model_name=model_name, num_classes=len(classes))
+        
         model = model.to(device)
 
-        criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        # Freeze all parameters
+        for param in model.parameters():
+            param.requires_grad = False
 
-        train_model(model, train_loader, val_loader, test_loader, optimizer, criterion, num_epochs=2, device=device, model_name=model_name)
+        # Unfreeze only the final dense layers
+        if model_name in ["resnet18", "resnet50"]:
+            # ResNet's final classification layer is typically 'fc'
+            for param in model.fc.parameters():
+                param.requires_grad = True
+            print(f"Unfrozen ResNet's 'fc' layer for {model_name}")
+        else: # densenets
+            # DenseNet's final classification layer is typically 'classifier'
+            for param in model.classifier.parameters():
+                param.requires_grad = True
+            print(f"Unfrozen DenseNet's 'classifier' layer for {model_name}")
+
+        criterion = nn.CrossEntropyLoss()
+
+        # Initialize the optimizer with only the trainable parameters
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.001)
+
+        train_model(model, train_loader, val_loader, test_loader, optimizer, criterion, num_epochs=10, device=device, model_name=model_name)
