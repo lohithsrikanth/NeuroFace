@@ -151,14 +151,17 @@ if __name__ == "__main__":
         batch_size=32,
         num_workers=2 # Consistent num_workers with dataset_utils.py
     )
-    model_names = ["densenet121", "densenet169", "densenet201"]
+    model_names = ["resnet18", "resnet50", "densenet121", "densenet169", "densenet201"]
 
     for model_name in model_names:
         print(f"Training model: {model_name}")
-        model = get_densenet(model_name=model_name, weights="IMAGENET1K_V1", num_classes=len(classes))
+        if model_name in ["resnet18", "resnet50"]:
+            model = get_resnet(model_name=model_name, num_classes=len(classes))
+        else:
+            model = get_densenet(model_name=model_name, num_classes=len(classes))
         model = model.to(device)
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-        train_model(model, train_loader, val_loader, test_loader, optimizer, criterion, num_epochs=5, device=device, model_name=model_name)
+        train_model(model, train_loader, val_loader, test_loader, optimizer, criterion, num_epochs=2, device=device, model_name=model_name)
