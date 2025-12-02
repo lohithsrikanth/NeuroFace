@@ -151,17 +151,18 @@ if __name__ == "__main__":
         num_workers=2 # Consistent num_workers with dataset_utils.py
     )
     #model_names = ["resnet18"]
-    model_names = ["resnet18", "resnet50", "densenet121", "densenet169", "densenet201"]
+    model_names = ["resnet18", "resnet50", "resnet101", "resnet152", "densenet121", "densenet161", "densenet169", "densenet201"]
 
     for model_name in model_names:
         print(f"Training model: {model_name}")
-        if model_name in ["resnet18", "resnet50"]:
+        if model_name in ["resnet18", "resnet50", "resnet101", "resnet152"]:
             model = get_resnet(model_name=model_name, num_classes=len(classes))
         else:
             model = get_densenet(model_name=model_name, num_classes=len(classes))
         
         model = model.to(device)
 
+        """
         # Freeze all parameters
         for param in model.parameters():
             param.requires_grad = False
@@ -177,10 +178,11 @@ if __name__ == "__main__":
             for param in model.classifier.parameters():
                 param.requires_grad = True
             print(f"Unfrozen DenseNet's 'classifier' layer for {model_name}")
+        """
 
         criterion = nn.CrossEntropyLoss()
 
         # Initialize the optimizer with only the trainable parameters
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.001)
 
-        train_model(model, train_loader, val_loader, test_loader, optimizer, criterion, num_epochs=10, device=device, model_name=model_name)
+        train_model(model, train_loader, val_loader, test_loader, optimizer, criterion, num_epochs=20, device=device, model_name=model_name)
