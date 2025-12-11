@@ -6,16 +6,21 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 NUM_CLASSES = 3
 
-def get_restnet(model_name:str = "restnet18", pretrained:bool = True):
-  """
-  Returns a RestNet-18 or RestNet-50 model adapted for 3-class classification
-  """
-  if model_name == "restnet18":
+def get_resnet(model_name:str = "restnet18", pretrained:bool = True):
+
+  if model_name == "resnet18":
     model = models.resnet18(pretrained=pretrained)
-  elif model_name == "restnet50":
+  elif model_name == "resnet50":
     model = models.resnet50(pretrained=pretrained)
+  elif model_name == "resnet101":
+    model = models.resnet101(pretrained=pretrained)
+  elif model_name == "resnet152":
+    model = models.resnet152(pretrained=pretrained)
+  elif model_name == "resnet34":
+    model = models.resnet34(pretrained=pretrained)
   else:
-    raise ValueError("Unsupported model name: {model_name}. Must be either 'restnet18' or 'restnet50'.")
+    raise ValueError("Unsupported model name: {model_name}")
+
   in_features = model.fc.in_features
   model.fc = nn.Linear(in_features, NUM_CLASSES)
   return model
