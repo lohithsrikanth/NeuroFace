@@ -1,0 +1,23 @@
+# Core Python
+numpy>=1.23
+pandas>=1.5
+
+# Scientific & ML
+scikit-learn>=1.2
+scipy>=1.9
+
+# Computer Vision & Imaging
+opencv-python>=4.7
+Pillow>=9.4
+
+# Deep Learning
+torch>=2.0
+torchvision>=0.15
+
+# Utilities
+tqdm>=4.65
+PyYAML>=6.0
+
+# Visualization
+matplotlib>=3.7
+seaborn>=0.12
