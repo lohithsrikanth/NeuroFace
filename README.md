@@ -45,7 +45,7 @@ The `MainProject_workflow.ipynb` file consists of the workflow for training all 
 
 ## Installation
 
-Upload the NeuroFace data in the root directory structure of the project and then run:
+Upload the NeuroFace data (as `Data/`) in the root directory structure of the project and then run:
 
 ```
 pip install -r requirements.txt
