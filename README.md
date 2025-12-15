@@ -50,3 +50,5 @@ Upload the NeuroFace data (as `Data/`) in the root directory structure of the pr
 ```
 pip install -r requirements.txt
 ```
+
+Here is the link to the top performing model weights: https://drive.google.com/file/d/1PMh8rIVyJMI1jwsO3YfLM0MSDvXUPjD_/view?usp=sharing
